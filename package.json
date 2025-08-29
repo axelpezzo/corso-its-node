@@ -1,0 +1,15 @@
+{
+  "name": "corso_its_node",
+  "version": "1.0.0",
+  "description": "Descrizione del progetto",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "author": "Alex Pezzini",
+  "license": "ISC",
+  "dependencies": {
+    "@koa/router": "^14.0.0",
+    "koa": "^3.0.1"
+  }
+}

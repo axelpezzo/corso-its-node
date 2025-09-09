@@ -1,29 +1,50 @@
-### Consegna 1: API REST CRUD con Koa-router
+### **Esercizio: API di Autenticazione e Accesso Protetto**
 
-**Obiettivo:** Creare un'API RESTful per la gestione di una lista di libri (libreria virtuale) utilizzando Koa.js e Koa-router. L'obiettivo è mettere in pratica i principi dell'architettura REST e l'uso dei metodi HTTP.
+**Obiettivo:** Creare un'API con un sistema di login che utilizzi l'autenticazione a token (JWT). L'esercizio si concentra sulla creazione di un **middleware di autenticazione** per proteggere le rotte e sulla gestione del flusso di login.
 
 **Dettagli dell'esercizio:**
 
 1.  **Inizializzazione del progetto:**
 
     - Crea un nuovo progetto Node.js.
-    - Installa le dipendenze necessarie: koa, koa-router e koa-bodyparser.
-    - Crea un file index.js che fungerà da punto di ingresso per l'applicazione.
+    - Installa le dipendenze necessarie: **koa**, **@koa/router**, **koa-bodyparser** e **jsonwebtoken**.
+    - Crea un file index.js che sarà il punto di ingresso dell'applicazione.
 
-2.  **Modello dati:**
+2.  **Modello dati e Rotte:**
 
-    - Implementa un array di oggetti in memoria che rappresenti i libri. Ogni oggetto-libro deve avere le seguenti proprietà: id, titolo, autore, annoPubblicazione e disponibile (booleano).
-    - Popola l'array con almeno 3-4 libri iniziali per testare le rotte.
+    - Inizializza un array di oggetti in memoria che funga da "database" di utenti. Ogni oggetto-utente deve avere le proprietà: id, username e password (la password può essere in chiaro per semplicità, ma ricorda di commentare che in un'applicazione reale dovrebbe essere hashetata).
+    - Definisci due rotte principali:
 
-3.  **Implementazione delle rotte CRUD:**
+      - POST /login (pubblica): per l'autenticazione.
+      - GET /profile (protetta): per accedere ai dati dell'utente autenticato.
 
-    - **GET /api/libri:** Restituisce l'intera lista dei libri.
-    - **GET /api/libri/:id:** Restituisce un singolo libro basandosi sul suo id. Se il libro non esiste, restituisci un errore con status code **404 Not Found**.
-    - **POST /api/libri:** Aggiunge un nuovo libro alla collezione. Il nuovo libro deve essere inviato nel corpo della richiesta. Assicurati di generare un id univoco per il nuovo libro. Restituisci il libro appena creato con status code **201 Created**.
-    - **PUT /api/libri/:id:** Aggiorna i dati di un libro esistente. Il nuovo corpo del libro viene inviato nella richiesta. Se il libro non esiste, restituisci un errore **404 Not Found**.
-    - **DELETE /api/libri/:id:** Rimuove un libro dalla collezione. Restituisci uno status code **204 No Content** in caso di successo.
+3.  **Implementazione della Rotta di Login:**
 
-4.  **Test e validazione:**
+    - Nel handler della rotta POST /login, recupera username e password dal corpo della richiesta.
+    - Cerca l'utente nel tuo "database" in memoria.
+    - Se l'utente e la password corrispondono, usa jsonwebtoken.sign() per creare un token JWT. Nel payload del token, inserisci l'id dell'utente.
+    - Restituisci il token al client con uno status code **200 OK**.
+    - Se le credenziali non sono valide, restituisci uno status code **401 Unauthorized** con un messaggio di errore.
 
-    - Utilizza un tool come Postman o Insomnia per testare tutte le rotte e verificare che gli status codes e le risposte siano corretti.
-    - Verifica che le risposte siano in formato JSON e ben strutturate.
+4.  **Creazione e Utilizzo del Middleware di Autenticazione:**
+
+    - Crea un middleware Koa. Questa funzione dovrà:
+
+      - Cercare l'header **Authorization** nella richiesta.
+      - Estrarre il token, rimuovendo il prefisso Bearer .
+      - Usare jsonwebtoken.verify() per decodificare e validare il token, utilizzando la stessa "secret key" usata per la firma.
+      - Se il token è valido, allega l'oggetto utente decodificato a ctx.state e chiama await next() per passare il controllo alla rotta successiva.
+      - Se il token non è presente o non è valido (es. scaduto o modificato), imposta ctx.status a **401 Unauthorized** e ctx.body a un messaggio di errore, interrompendo la catena di middleware.
+
+5.  **Implementazione della Rotta Protetta:**
+
+    - Applica il middleware di autenticazione alla rotta GET /profile.
+    - Nel handler della rotta, accedi ai dati dell'utente autenticato direttamente da ctx.state (es. ctx.state.user).
+    - Restituisci i dati dell'utente (ad esempio, solo l'username) con uno status code **200 OK**.
+
+6.  **Test e validazione:**
+
+    - Utilizza Postman o Insomnia per testare il flusso.
+    - Prova a chiamare GET /profile **senza** l'header di autorizzazione. Dovresti ricevere un errore **401 Unauthorized**.
+    - Esegui una richiesta POST /login per ottenere un token valido.
+    - Esegui nuovamente la richiesta GET /profile, questa volta includendo l'header Authorization: Bearer . Dovresti ricevere la risposta corretta con i dati del profilo.
